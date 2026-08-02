@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -510,7 +510,7 @@ Cells are the basic unit of life. All living organisms are made of cells.
   },
 ];
 
-export default function SeedPage() {
+function SeedContent() {
   const searchParams = useSearchParams();
   const secret = searchParams.get("secret");
   const { user, loading: authLoading } = useAuth();
@@ -678,5 +678,17 @@ export default function SeedPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SeedPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    }>
+      <SeedContent />
+    </Suspense>
   );
 }
