@@ -1,8 +1,6 @@
-export const dynamic = "force-dynamic";
+"use client";
 
-import NextDynamic from "next/dynamic";
-
-const SeedContent = NextDynamic(() => import("./seed-content"), { ssr: false });
+import SeedContent from "./seed-content";
 
 export default function SeedPage() {
   return <SeedContent />;
