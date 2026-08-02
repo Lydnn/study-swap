@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Subject } from "@/types";
@@ -524,6 +524,14 @@ function SeedInner() {
   const [message, setMessage] = useState("");
   const [progress, setProgress] = useState(0);
 
+  if (secret === null) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   if (secret !== "studyswap") {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-4">
@@ -685,13 +693,5 @@ function SeedInner() {
 }
 
 export default function SeedContent() {
-  return (
-    <Suspense fallback={
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    }>
-      <SeedInner />
-    </Suspense>
-  );
+  return <SeedInner />;
 }
