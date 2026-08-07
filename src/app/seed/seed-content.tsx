@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Subject } from "@/types";
@@ -510,13 +510,13 @@ Cells are the basic unit of life. All living organisms are made of cells.
 ];
 
 function SeedInner() {
-  const [secret, setSecret] = useState<string | null>(null);
+  const [secret] = useState(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("secret");
+    }
+    return null;
+  });
   const { user, loading: authLoading } = useAuth();
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setSecret(params.get("secret"));
-  }, []);
   const supabase = createClient();
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
     "idle"

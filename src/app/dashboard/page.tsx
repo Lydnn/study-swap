@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { Deck, StudyGuide } from "@/types";
-import { BookOpen, FileText, Plus, Trash2, Trophy, Heart } from "lucide-react";
+import { BookOpen, FileText, Plus, Trash2, Trophy, Heart, Clock } from "lucide-react";
 
 interface TestResult {
   id: string;
@@ -21,6 +21,14 @@ interface FavoriteDeck {
   deck: Deck | null;
 }
 
+interface RecentlyStudied {
+  id: string;
+  deck_id: string;
+  total_cards: number;
+  studied_at: string;
+  deck: Deck | null;
+}
+
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -29,6 +37,7 @@ export default function DashboardPage() {
   const [guides, setGuides] = useState<StudyGuide[]>([]);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [savedDecks, setSavedDecks] = useState<FavoriteDeck[]>([]);
+  const [recentDecks, setRecentDecks] = useState<RecentlyStudied[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"decks" | "guides" | "tests" | "saved">("decks");
 
@@ -42,7 +51,7 @@ export default function DashboardPage() {
     if (!user) return;
 
     const fetchData = async () => {
-      const [decksRes, guidesRes, testsRes, favsRes] = await Promise.all([
+      const [decksRes, guidesRes, testsRes, favsRes, recentRes] = await Promise.all([
         supabase
           .from("decks")
           .select("*")
@@ -64,12 +73,19 @@ export default function DashboardPage() {
           .select("id, deck:decks(*)")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
+        supabase
+          .from("recently_studied")
+          .select("id, deck_id, total_cards, studied_at, deck:decks(*)")
+          .eq("user_id", user.id)
+          .order("studied_at", { ascending: false })
+          .limit(6),
       ]);
 
       if (decksRes.data) setDecks(decksRes.data);
       if (guidesRes.data) setGuides(guidesRes.data);
       if (testsRes.data) setTestResults(testsRes.data);
       if (favsRes.data) setSavedDecks(favsRes.data as unknown as FavoriteDeck[]);
+      if (recentRes.data) setRecentDecks(recentRes.data as unknown as RecentlyStudied[]);
       setLoading(false);
     };
 
@@ -114,6 +130,42 @@ export default function DashboardPage() {
           Create New
         </Link>
       </div>
+
+      {recentDecks.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="h-5 w-5 text-gray-400" />
+            <h2 className="text-lg font-semibold text-gray-900">Recently Studied</h2>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {recentDecks
+              .filter((r) => r.deck)
+              .map((r) => {
+                const d = r.deck!;
+                return (
+                  <Link
+                    key={r.id}
+                    href={`/study/${d.id}`}
+                    className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <BookOpen className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 group-hover:text-primary truncate text-sm">
+                        {d.title}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {d.subject} &middot; {r.total_cards} cards &middot;{" "}
+                        {new Date(r.studied_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 flex gap-1 rounded-lg border border-gray-200 bg-white p-1 w-fit">
         <button
